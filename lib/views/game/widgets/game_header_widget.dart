@@ -38,104 +38,96 @@ class GameHeaderWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Back Button (Chunky Glass Button)
+                // Back Button
                 SvgIconButton(
                   svgString: '''
 <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
   <path d="M 20 8 L 10 16 L 20 24" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 ''',
-                  size: 46,
-                  iconSize: 22,
+                  size: 40,
+                  iconSize: 20,
                   baseColor: const Color(0xFF334155),
                   shadowColor: const Color(0xFF1E293B),
                   onTap: onBackTap,
                 ),
+                const SizedBox(width: 8),
 
-                // Level Badge (Neon Cyan / Indigo Pill, or Golden Crimson for Boss Levels)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isBoss
-                          ? const [Color(0xFFDC2626), Color(0xFFB45309)]
-                          : const [Color(0xFF0284C7), Color(0xFF0369A1)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isBoss ? const Color(0xFFFBBF24) : const Color(0xFF38BDF8),
-                      width: isBoss ? 2.2 : 1.8,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isBoss
-                            ? const Color(0xFFDC2626).withValues(alpha: 0.6)
-                            : const Color(0xFF0284C7).withValues(alpha: 0.4),
-                        blurRadius: isBoss ? 14 : 10,
-                        offset: const Offset(0, 3),
+                // Level Badge (Flexible Center Pill)
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isBoss
+                            ? const [Color(0xFFDC2626), Color(0xFFB45309)]
+                            : const [Color(0xFF0284C7), Color(0xFF0369A1)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isBoss) ...[
-                        const Text('👑 ', style: TextStyle(fontSize: 16)),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isBoss ? const Color(0xFFFBBF24) : const Color(0xFF38BDF8),
+                        width: isBoss ? 2.0 : 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isBoss
+                              ? const Color(0xFFDC2626).withValues(alpha: 0.5)
+                              : const Color(0xFF0284C7).withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
                       ],
-                      Text(
-                        isBoss ? 'زعيم ${game.currentLevel}' : 'المستوى ${game.currentLevel}',
+                    ),
+                    child: Center(
+                      child: Text(
+                        isBoss ? '👑 زعيم ${game.currentLevel}' : 'المستوى ${game.currentLevel}',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 17,
+                          fontSize: 15,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
 
                 // Coins Counter (Glass Gold Badge)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B).withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.25),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+                    color: const Color(0xFF1E293B).withValues(alpha: 0.90),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SvgPicture.string(AppAssets.coinSvg, width: 22, height: 22),
-                      const SizedBox(width: 6),
+                      SvgPicture.string(AppAssets.coinSvg, width: 20, height: 20),
+                      const SizedBox(width: 5),
                       Text(
                         '${game.coins}',
                         style: const TextStyle(
                           color: Color(0xFFFBBF24),
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
 
-                // Settings Button (Chunky Glass Button)
+                // Settings Button
                 SvgIconButton(
                   svgString: AppAssets.settingsSvg,
-                  size: 46,
-                  iconSize: 22,
+                  size: 40,
+                  iconSize: 20,
                   baseColor: const Color(0xFF475569),
                   shadowColor: const Color(0xFF334155),
                   onTap: onSettingsTap,

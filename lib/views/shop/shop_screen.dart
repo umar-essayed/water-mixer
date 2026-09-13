@@ -78,6 +78,13 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         'desc': 'قطع ألماس منشورى يعكس ألوان الطيف البنفسجية',
         'svg': AppAssets.tubeFrameCrystalSvg,
       },
+      {
+        'id': 'magic_potion',
+        'name': 'القارورة السحرية الملكية',
+        'cost': 450,
+        'desc': 'قارورة جرعات كروية ببطن مستدير ونجمة ذهبية براقة ولمعات متلألئة',
+        'svg': AppAssets.tubeFrameSvg,
+      },
     ];
 
     final perks = [
@@ -98,6 +105,33 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
         'icon': Icons.science_rounded,
         'iconColor': const Color(0xFF00E5FF),
         'ownedText': game.hasPermanentExtraTube ? 'مفعل دائماً في كل المستويات' : 'غير مفعل',
+      },
+      {
+        'id': 'bomb_defuser',
+        'title': 'مفك القنابل الكيميائية (شحنتان)',
+        'desc': 'يبطل مفعول القنابل الخطرة تلقائياً قبل انفجارها ويمنحك نقاطاً ذهبية إضافية',
+        'cost': 95,
+        'icon': Icons.shield_rounded,
+        'iconColor': const Color(0xFF10B981),
+        'ownedText': 'المتبقي لديك: ${game.bombDefusers} مفك',
+      },
+      {
+        'id': 'flood_siphon',
+        'title': 'صمام تفريغ الطوفان (3 شحنات)',
+        'desc': 'يخفض منسوب طوفان المياه في طور البقاء بنسبة 45% فوراً لتفادي الغرق',
+        'cost': 85,
+        'icon': Icons.water_drop_rounded,
+        'iconColor': const Color(0xFF06B6D4),
+        'ownedText': 'المتبقي لديك: ${game.floodSiphons} صمام',
+      },
+      {
+        'id': 'fortune_elixir',
+        'title': 'إكسير الحظ ومضاعفة الجوائز (5 مستويات)',
+        'desc': 'يضاعف جميع الجوائز والعملات المكتسبة لـ 5 مراحل متتالية',
+        'cost': 110,
+        'icon': Icons.auto_awesome_rounded,
+        'iconColor': const Color(0xFFFBBF24),
+        'ownedText': 'المتبقي لديك: ${game.fortuneElixir} شحنة',
       },
       {
         'id': 'color_radar',

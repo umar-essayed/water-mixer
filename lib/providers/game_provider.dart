@@ -89,6 +89,9 @@ class GameProvider extends ChangeNotifier {
   bool get hasPermanentExtraTube => _hasPermanentExtraTube;
   int get colorRadarCharges => _colorRadarCharges;
   int get timeFreezes => _timeFreezes;
+  int get bombDefusers => PersistenceManager.getBombDefusers();
+  int get floodSiphons => PersistenceManager.getFloodSiphons();
+  int get fortuneElixir => PersistenceManager.getFortuneElixir();
 
   int? get timeRemaining => _timeRemaining;
   bool _bonusTimePulse = false;
@@ -525,6 +528,12 @@ class GameProvider extends ChangeNotifier {
       } else if (perkId == 'tube_key') {
         _unlockKeys += 1;
         PersistenceManager.addUnlockKeys(1);
+      } else if (perkId == 'bomb_defuser') {
+        PersistenceManager.addBombDefusers(2);
+      } else if (perkId == 'flood_siphon') {
+        PersistenceManager.addFloodSiphons(3);
+      } else if (perkId == 'fortune_elixir') {
+        PersistenceManager.addFortuneElixir(5);
       } else if (perkId == 'double_coins') {
         _doubleCoins = true;
         PersistenceManager.enableDoubleCoins();

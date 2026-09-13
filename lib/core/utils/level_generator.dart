@@ -143,6 +143,43 @@ class LevelGenerator {
     );
   }
 
+  /// Generates a guaranteed 100% solvable compact wave for Survival Mode
+  static List<TubeModel> generateSurvivalWave(int wave) {
+    final int numColors;
+    const int numEmpty = 2;
+
+    if (wave <= 1) {
+      numColors = 3; // 5 tubes total
+    } else if (wave <= 3) {
+      numColors = 4; // 6 tubes total
+    } else if (wave <= 6) {
+      numColors = 5; // 7 tubes total
+    } else {
+      numColors = 6; // 8 tubes total max for survival screen
+    }
+
+    final scrambleSteps = 16 + (wave * 3).clamp(0, 45);
+    final tubes = _scrambleSolvedState(
+      numColors,
+      numEmpty,
+      capacity: 4,
+      scrambleSteps: scrambleSteps,
+    );
+
+    // Unstable bomb in wave 4+ for extra thrill
+    if (wave >= 4) {
+      final int countdown = max(12, 20 - wave);
+      for (int i = 0; i < tubes.length; i++) {
+        if (tubes[i].layers.length >= 3) {
+          tubes[i] = tubes[i].copyWith(bombCountdown: countdown);
+          break;
+        }
+      }
+    }
+
+    return tubes;
+  }
+
   /// Backward simulation: Starts with solved tubes and performs reverse moves
   static List<TubeModel> _scrambleSolvedState(
     int numColors,

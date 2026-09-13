@@ -265,7 +265,7 @@ class Bottle3DPainter extends CustomPainter {
           Colors.white.withValues(alpha: 0.28),
           Colors.white.withValues(alpha: 0.08),
           const Color(0xFF00F0FF).withValues(alpha: 0.04),
-          Colors.black.withValues(alpha: 0.12),
+          Colors.white.withValues(alpha: 0.02),
           const Color(0xFF00F0FF).withValues(alpha: 0.04),
           Colors.white.withValues(alpha: 0.08),
           Colors.white.withValues(alpha: 0.24),
@@ -298,31 +298,30 @@ class Bottle3DPainter extends CustomPainter {
 
       if (overallLiquidTop >= layerBottom) continue; // Drained
 
-      final double actualTop = max(layerTop, overallLiquidTop);
-      final isHidden = (i < hiddenCount) && (i < layers.length - 1);
+      final double actualTop = layerTop.clamp(overallLiquidTop, layerBottom);
+      final bool isHidden = i < hiddenCount;
       final Color baseColor = layers[i];
-
       final Rect layerRect = Rect.fromLTRB(2, actualTop, w - 2, layerBottom);
 
       if (isHidden) {
         // Frosted Ice & Swirling Mystical Fog
         _drawFrostedIceMysteryLayer(canvas, cx, actualTop, layerBottom, w, layerH);
       } else {
-        // Glowing Saturated Liquid with 3D Cylindrical Shader
-        final Color leftGleam = Color.lerp(baseColor, Colors.white, 0.46)!;
+        // Radiant saturated liquid with clean, pure highlights (zero dark/black shadows)
+        final Color leftGleam = Color.lerp(baseColor, Colors.white, 0.38)!;
         final Color coreColor = baseColor;
-        final Color rightShadow = Color.lerp(baseColor, Colors.black, 0.42)!;
+        final Color rightEdge = Color.lerp(baseColor, Colors.white, 0.12)!;
 
         final Paint liquidPaint = Paint()
           ..shader = LinearGradient(
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
-            stops: const [0.0, 0.20, 0.65, 1.0],
+            stops: const [0.0, 0.25, 0.75, 1.0],
             colors: [
-              leftGleam.withValues(alpha: 0.95),
+              leftGleam.withValues(alpha: 0.96),
               coreColor,
-              coreColor.withValues(alpha: 0.92),
-              rightShadow,
+              coreColor,
+              rightEdge.withValues(alpha: 0.94),
             ],
           ).createShader(layerRect);
 
@@ -392,19 +391,19 @@ class Bottle3DPainter extends CustomPainter {
       final double incomingTop = (existingLiquidTop - (incomingUnits * layerH)).clamp(topUsableY, bottomY);
       final Rect incRect = Rect.fromLTRB(2, incomingTop, w - 2, existingLiquidTop);
 
-      final Color leftGleam = Color.lerp(incomingColor!, Colors.white, 0.46)!;
-      final Color rightShadow = Color.lerp(incomingColor!, Colors.black, 0.42)!;
+      final Color leftGleam = Color.lerp(incomingColor!, Colors.white, 0.38)!;
+      final Color rightEdge = Color.lerp(incomingColor!, Colors.white, 0.12)!;
 
       final Paint incPaint = Paint()
         ..shader = LinearGradient(
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
-          stops: const [0.0, 0.20, 0.65, 1.0],
+          stops: const [0.0, 0.25, 0.75, 1.0],
           colors: [
-            leftGleam.withValues(alpha: 0.95),
+            leftGleam.withValues(alpha: 0.96),
             incomingColor!,
-            incomingColor!.withValues(alpha: 0.92),
-            rightShadow,
+            incomingColor!,
+            rightEdge.withValues(alpha: 0.94),
           ],
         ).createShader(incRect);
 

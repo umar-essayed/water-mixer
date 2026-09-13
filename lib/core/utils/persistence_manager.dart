@@ -251,4 +251,43 @@ class PersistenceManager {
       await _prefs?.setInt(_keySurvivalBestWave, wave);
     }
   }
+
+  // ===================== New Tactical Shop Perks =====================
+  static const String _keyBombDefusers = 'wm_bomb_defusers';
+  static const String _keyFloodSiphons = 'wm_flood_siphons';
+  static const String _keyFortuneElixir = 'wm_fortune_elixir';
+
+  static int getBombDefusers() => _prefs?.getInt(_keyBombDefusers) ?? 1;
+  static Future<void> addBombDefusers(int count) async {
+    final current = getBombDefusers();
+    await _prefs?.setInt(_keyBombDefusers, current + count);
+  }
+  static Future<bool> useBombDefuser() async {
+    final current = getBombDefusers();
+    if (current > 0) {
+      await _prefs?.setInt(_keyBombDefusers, current - 1);
+      return true;
+    }
+    return false;
+  }
+
+  static int getFloodSiphons() => _prefs?.getInt(_keyFloodSiphons) ?? 2;
+  static Future<void> addFloodSiphons(int count) async {
+    final current = getFloodSiphons();
+    await _prefs?.setInt(_keyFloodSiphons, current + count);
+  }
+  static Future<bool> useFloodSiphon() async {
+    final current = getFloodSiphons();
+    if (current > 0) {
+      await _prefs?.setInt(_keyFloodSiphons, current - 1);
+      return true;
+    }
+    return false;
+  }
+
+  static int getFortuneElixir() => _prefs?.getInt(_keyFortuneElixir) ?? 0;
+  static Future<void> addFortuneElixir(int count) async {
+    final current = getFortuneElixir();
+    await _prefs?.setInt(_keyFortuneElixir, current + count);
+  }
 }
