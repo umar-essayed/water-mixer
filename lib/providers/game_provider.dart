@@ -642,6 +642,14 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Add or deduct coins and save persistently
+  void addCoins(int amount) {
+    final newTotal = (_state.coins + amount).clamp(0, 9999999);
+    PersistenceManager.saveTotalCoins(newTotal);
+    _state = _state.copyWith(coins: newTotal);
+    notifyListeners();
+  }
+
   /// Advance to next level
   void nextLevel() {
     loadLevel(_state.currentLevel + 1);

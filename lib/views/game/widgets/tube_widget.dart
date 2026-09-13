@@ -235,6 +235,8 @@ class _TubeWidgetState extends State<TubeWidget> with TickerProviderStateMixin {
                     ],
                   ),
                 ),
+              ),
+
             // 4c. Active Unstable Liquid Bomb Badge
             if (widget.tube.isBomb && !widget.tube.isSolved)
               Positioned(

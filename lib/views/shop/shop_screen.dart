@@ -389,7 +389,7 @@ class _ShopScreenState extends State<ShopScreen> with SingleTickerProviderStateM
                     ListView.separated(
                       padding: const EdgeInsets.all(16),
                       itemCount: perks.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 14),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, index) {
                         final perk = perks[index];
                         final String id = perk['id'] as String;
