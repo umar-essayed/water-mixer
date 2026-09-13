@@ -48,7 +48,7 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
+          name: WaterMixer-Release-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
           overwrite: true
@@ -57,8 +57,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.1.0
-          name: Release v1.1.0 - Endless Thrill & Advanced Mechanics
+          tag_name: v1.2.0
+          name: Release v1.2.0 - Endless Survival, Lab Renovation, Bomb Hazard & Fixed Shadow
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
         env:

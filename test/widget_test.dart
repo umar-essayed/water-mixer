@@ -1,17 +1,11 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:water_mixer_new/main.dart';
+import 'package:water_mixer_new/models/tube_model.dart';
+import 'package:flutter/material.dart';
 
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    expect(1 + 1, 2);
+  test('Smoke test - TubeModel creation', () {
+    final tube = TubeModel(id: 'smoke_test', capacity: 4, layers: [Colors.blue]);
+    expect(tube.id, 'smoke_test');
+    expect(tube.layers.length, 1);
   });
 }
