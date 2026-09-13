@@ -1,9 +1,9 @@
 // lib/presentation/providers/game_providers.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/game_engine.dart';
-import '../../domain/services/level_generator.dart';
-import '../../core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
+import 'package:water_mixer_new/domain/services/level_generator.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
 
 // 🎮 Game Engine Provider
 final gameEngineProvider =

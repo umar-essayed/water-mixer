@@ -1,8 +1,8 @@
 // lib/presentation/widgets/game_header.dart
 
 import 'package:flutter/material.dart';
-import '../../domain/entities/game_engine.dart';
-import '../../core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
 
 class GameHeader extends StatelessWidget {
   final int levelNumber;

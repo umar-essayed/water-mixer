@@ -1,7 +1,7 @@
 // lib/domain/services/level_generator.dart
 
 import 'dart:math';
-import '../entities/game_engine.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
 
 /// 🧠 مولد الألغاز الذكي والقابل للحل 100% رياضياً
 class LevelGenerator {

@@ -1,7 +1,7 @@
 // lib/presentation/pages/leaderboard/leaderboard_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({Key? key}) : super(key: key);

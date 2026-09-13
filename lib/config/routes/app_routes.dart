@@ -1,14 +1,14 @@
 // lib/config/routes/app_routes.dart
 
 import 'package:flutter/material.dart';
-import '../../presentation/pages/splash_screen.dart';
-import '../../presentation/pages/menu_screen.dart';
-import '../../presentation/pages/game/game_screen.dart';
-import '../../presentation/pages/level_selection_screen.dart';
-import '../../presentation/pages/shop/shop_screen.dart';
-import '../../presentation/pages/leaderboard/leaderboard_screen.dart';
-import '../../presentation/pages/settings/settings_screen.dart';
-import '../../domain/entities/game_engine.dart';
+import 'package:water_mixer_new/presentation/pages/splash_screen.dart';
+import 'package:water_mixer_new/presentation/pages/menu_screen.dart';
+import 'package:water_mixer_new/presentation/pages/game/game_screen.dart';
+import 'package:water_mixer_new/presentation/pages/level_selection_screen.dart';
+import 'package:water_mixer_new/presentation/pages/shop/shop_screen.dart';
+import 'package:water_mixer_new/presentation/pages/leaderboard/leaderboard_screen.dart';
+import 'package:water_mixer_new/presentation/pages/settings/settings_screen.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
 
 class AppRoutes {
   static const String splash = '/';

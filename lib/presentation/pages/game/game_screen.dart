@@ -4,13 +4,13 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../domain/entities/game_engine.dart';
-import '../../domain/services/level_generator.dart';
-import '../../providers/game_providers.dart';
-import '../../widgets/game_header.dart';
-import '../../widgets/test_tube_widget.dart';
-import '../../widgets/confetti_widget.dart';
-import '../../core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
+import 'package:water_mixer_new/domain/services/level_generator.dart';
+import 'package:water_mixer_new/presentation/providers/game_providers.dart';
+import 'package:water_mixer_new/presentation/widgets/game_header.dart';
+import 'package:water_mixer_new/presentation/widgets/test_tube_widget.dart';
+import 'package:water_mixer_new/presentation/widgets/confetti_widget.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
   final int levelNumber;

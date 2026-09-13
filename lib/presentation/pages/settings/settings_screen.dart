@@ -1,7 +1,7 @@
 // lib/presentation/pages/settings/settings_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);

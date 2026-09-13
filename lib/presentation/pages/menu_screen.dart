@@ -1,9 +1,9 @@
 // lib/presentation/pages/menu_screen.dart
 
 import 'package:flutter/material.dart';
-import '../../config/routes/app_routes.dart';
-import '../../core/local_storage/game_storage.dart';
-import '../../domain/entities/game_engine.dart';
+import 'package:water_mixer_new/config/routes/app_routes.dart';
+import 'package:water_mixer_new/core/local_storage/game_storage.dart';
+import 'package:water_mixer_new/domain/entities/game_engine.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({Key? key}) : super(key: key);
