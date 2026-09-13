@@ -1,99 +1,217 @@
 // lib/domain/entities/game_engine.dart
 
 import 'package:equatable/equatable.dart';
+import 'dart:math';
 
-/// 🎮 نموذج الأنبوب الاختبار (Test Tube)
-class TestTube extends Equatable {
-  final int id;
-  final List<String> colors; // [bottom, ..., top]
-  final int maxCapacity;
+/// 🎨 طبقة واحدة من السائل داخل الأنبوب
+class TubeLayer extends Equatable {
+  final String color; // 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'cyan', 'pink', 'rainbow', 'transparent'
+  final bool isMystery; // هل السائل مجهول الهوية؟
+  final bool isRevealed; // هل تم كشف السائل المجهول؟
 
-  const TestTube({
-    required this.id,
-    required this.colors,
-    this.maxCapacity = 4,
+  const TubeLayer({
+    required this.color,
+    this.isMystery = false,
+    this.isRevealed = false,
   });
 
-  /// الحصول على لون الماء العلوي
-  String? getTopColor() {
-    if (colors.isEmpty) return null;
-    for (int i = colors.length - 1; i >= 0; i--) {
-      if (colors[i] != 'transparent') return colors[i];
+  /// اللون الفعلي المعروض للمستخدم
+  String get displayColor {
+    if (isMystery && !isRevealed) {
+      return 'mystery';
     }
-    return null;
+    return color;
   }
 
-  /// التحقق من امتلاء الأنبوب
-  bool isFull() => colors.where((c) => c != 'transparent').length >= maxCapacity;
-
-  /// التحقق من عدم امتلاء الأنبوب
-  bool hasSpace() => !isFull();
-
-  /// الحصول على عدد الألوان في الأنبوب
-  int getColorCount() => colors.where((c) => c != 'transparent').length;
-
-  /// التحقق من أن جميع الألوان متطابقة
-  bool isSorted() {
-    final nonTransparent = colors.where((c) => c != 'transparent').toList();
-    if (nonTransparent.isEmpty) return true;
-    return nonTransparent.every((color) => color == nonTransparent.first);
-  }
-
-  /// نسخ الأنبوب بتعديلات
-  TestTube copyWith({
-    int? id,
-    List<String>? colors,
-    int? maxCapacity,
+  TubeLayer copyWith({
+    String? color,
+    bool? isMystery,
+    bool? isRevealed,
   }) {
-    return TestTube(
-      id: id ?? this.id,
-      colors: colors ?? [...this.colors],
-      maxCapacity: maxCapacity ?? this.maxCapacity,
+    return TubeLayer(
+      color: color ?? this.color,
+      isMystery: isMystery ?? this.isMystery,
+      isRevealed: isRevealed ?? this.isRevealed,
     );
   }
 
   @override
-  List<Object?> get props => [id, colors, maxCapacity];
+  List<Object?> get props => [color, isMystery, isRevealed];
 }
 
-/// 🎮 مستوى اللعبة (Level)
+/// 🧪 نموذج الأنبوب المخبري (Test Tube)
+class TestTube extends Equatable {
+  final int id;
+  final List<TubeLayer> layers; // [قاع الأنبوب ... قمة الأنبوب]
+  final int maxCapacity;
+  final bool isLocked; // هل الأنبوب مغلق بسلسلة وقفل؟
+  final String? unlockCondition;
+  final bool isBomb; // هل هو أنبوب قنبلة موقوتة؟
+  final int? bombCountdown; // عدد الحركات المتبقية قبل الانفجار
+
+  const TestTube({
+    required this.id,
+    required this.layers,
+    this.maxCapacity = 4,
+    this.isLocked = false,
+    this.unlockCondition,
+    this.isBomb = false,
+    this.bombCountdown,
+  });
+
+  /// قائمة الألوان كنصوص للتوافق
+  List<String> get colors => layers.map((l) => l.color).toList();
+
+  /// الحصول على الطبقة العلوية غير الشفافة
+  TubeLayer? getTopLayer() {
+    for (int i = layers.length - 1; i >= 0; i--) {
+      if (layers[i].color != 'transparent') {
+        return layers[i];
+      }
+    }
+    return null;
+  }
+
+  /// الحصول على لون الماء العلوي
+  String? getTopColor() {
+    return getTopLayer()?.color;
+  }
+
+  /// هل الطبقة العلوية ما زالت مجهولة؟
+  bool isTopMystery() {
+    final top = getTopLayer();
+    return top != null && top.isMystery && !top.isRevealed;
+  }
+
+  /// عدد طبقات السائل الحالية
+  int getColorCount() {
+    return layers.where((l) => l.color != 'transparent').length;
+  }
+
+  /// المساحة الفارغة المتوفرة للصب
+  int getAvailableSpace() {
+    return maxCapacity - getColorCount();
+  }
+
+  /// هل الأنبوب ممتلئ تماماً؟
+  bool isFull() => getColorCount() >= maxCapacity;
+
+  /// هل الأنبوب فارغ تماماً؟
+  bool isEmpty() => getColorCount() == 0;
+
+  /// هل يحتوي الأنبوب على متسع؟
+  bool hasSpace() => getAvailableSpace() > 0;
+
+  /// التحقق من أن الأنبوب مفروز ومكتمل بنجاح (نفس اللون بالكامل ومكتمل السعة أو فارغ)
+  bool isSorted() {
+    final activeLayers = layers.where((l) => l.color != 'transparent').toList();
+    if (activeLayers.isEmpty) return true; // الفارغ يعتبر مكتملاً
+
+    // إذا لم يكتمل الأنبوب لكامل سعته لا يعتبر مفروزاً نهائياً
+    if (activeLayers.length != maxCapacity) return false;
+
+    // لا يجب أن يكون هناك أي سائل مجهول غير مكشوف
+    if (activeLayers.any((l) => l.isMystery && !l.isRevealed)) return false;
+
+    final firstColor = activeLayers.first.color;
+    return activeLayers.every((l) => l.color == firstColor);
+  }
+
+  TestTube copyWith({
+    int? id,
+    List<TubeLayer>? layers,
+    int? maxCapacity,
+    bool? isLocked,
+    String? unlockCondition,
+    bool? isBomb,
+    int? bombCountdown,
+  }) {
+    return TestTube(
+      id: id ?? this.id,
+      layers: layers ?? this.layers.map((l) => l.copyWith()).toList(),
+      maxCapacity: maxCapacity ?? this.maxCapacity,
+      isLocked: isLocked ?? this.isLocked,
+      unlockCondition: unlockCondition ?? this.unlockCondition,
+      isBomb: isBomb ?? this.isBomb,
+      bombCountdown: bombCountdown ?? this.bombCountdown,
+    );
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        layers,
+        maxCapacity,
+        isLocked,
+        unlockCondition,
+        isBomb,
+        bombCountdown,
+      ];
+}
+
+/// 🎯 أوضاع اللعبة المختلفة
+enum GameMode {
+  classic, // المستويات الكلاسيكية
+  endless, // الوضع اللانهائي مع سلسلة الانتصارات
+  timeRush, // سباق الوقت (90 ثانية)
+  dailyChallenge, // التحدي اليومي
+}
+
+/// 🎮 مستوى اللعبة
 class GameLevel extends Equatable {
   final int levelNumber;
-  final String difficulty; // easy, medium, hard, very_hard, impossible
+  final GameMode mode;
+  final String difficulty;
   final int minMoves;
   final int baseScore;
   final List<TestTube> initialTubes;
-  final int timeLimit; // بالثواني
+  final int timeLimit;
+  final String worldName;
+  final String? specialRule;
 
   const GameLevel({
     required this.levelNumber,
+    this.mode = GameMode.classic,
     required this.difficulty,
     required this.minMoves,
     required this.baseScore,
     required this.initialTubes,
     required this.timeLimit,
+    this.worldName = 'مختبر الكيمياء',
+    this.specialRule,
   });
 
   @override
   List<Object?> get props => [
-    levelNumber,
-    difficulty,
-    minMoves,
-    baseScore,
-    initialTubes,
-    timeLimit,
-  ];
+        levelNumber,
+        mode,
+        difficulty,
+        minMoves,
+        baseScore,
+        initialTubes,
+        timeLimit,
+        worldName,
+        specialRule,
+      ];
 }
 
-/// 🎮 حالة اللعبة (Game State)
+/// 🎮 حالة اللعبة الحية
 class GameState extends Equatable {
   final List<TestTube> tubes;
   final int moves;
-  final int elapsedTime; // بالثواني
+  final int elapsedTime;
   final bool isGameWon;
   final bool isGameOver;
-  final List<(int, int)> moveHistory; // (from, to)
+  final String? gameOverReason; // 'out_of_moves', 'bomb_exploded', 'time_up'
+  final List<(int, int)> moveHistory;
+  final List<List<TestTube>> stateHistory;
   final int score;
+  final int stars;
+  final int streak;
+  final int remainingTime;
+  final (int, int)? hintMove; // أفضل حركة مقترحة (من، إلى)
+  final int? pouringFromId;
+  final int? pouringToId;
 
   const GameState({
     required this.tubes,
@@ -101,8 +219,16 @@ class GameState extends Equatable {
     required this.elapsedTime,
     required this.isGameWon,
     required this.isGameOver,
+    this.gameOverReason,
     required this.moveHistory,
+    required this.stateHistory,
     required this.score,
+    this.stars = 0,
+    this.streak = 0,
+    this.remainingTime = 90,
+    this.hintMove,
+    this.pouringFromId,
+    this.pouringToId,
   });
 
   GameState copyWith({
@@ -111,8 +237,18 @@ class GameState extends Equatable {
     int? elapsedTime,
     bool? isGameWon,
     bool? isGameOver,
+    String? gameOverReason,
     List<(int, int)>? moveHistory,
+    List<List<TestTube>>? stateHistory,
     int? score,
+    int? stars,
+    int? streak,
+    int? remainingTime,
+    (int, int)? hintMove,
+    int? pouringFromId,
+    int? pouringToId,
+    bool clearHint = false,
+    bool clearPouring = false,
   }) {
     return GameState(
       tubes: tubes ?? this.tubes,
@@ -120,140 +256,223 @@ class GameState extends Equatable {
       elapsedTime: elapsedTime ?? this.elapsedTime,
       isGameWon: isGameWon ?? this.isGameWon,
       isGameOver: isGameOver ?? this.isGameOver,
+      gameOverReason: gameOverReason ?? this.gameOverReason,
       moveHistory: moveHistory ?? this.moveHistory,
+      stateHistory: stateHistory ?? this.stateHistory,
       score: score ?? this.score,
+      stars: stars ?? this.stars,
+      streak: streak ?? this.streak,
+      remainingTime: remainingTime ?? this.remainingTime,
+      hintMove: clearHint ? null : (hintMove ?? this.hintMove),
+      pouringFromId: clearPouring ? null : (pouringFromId ?? this.pouringFromId),
+      pouringToId: clearPouring ? null : (pouringToId ?? this.pouringToId),
     );
   }
 
   @override
   List<Object?> get props => [
-    tubes,
-    moves,
-    elapsedTime,
-    isGameWon,
-    isGameOver,
-    moveHistory,
-    score,
-  ];
+        tubes,
+        moves,
+        elapsedTime,
+        isGameWon,
+        isGameOver,
+        gameOverReason,
+        moveHistory,
+        stateHistory,
+        score,
+        stars,
+        streak,
+        remainingTime,
+        hintMove,
+        pouringFromId,
+        pouringToId,
+      ];
 }
 
-/// 🎮 محرك اللعبة الأساسي
+/// 🎮 محرك اللعبة المتطور والذكي
 class GameEngine {
   late GameState _currentState;
   late GameLevel _level;
-  
   int _maxMoves = 50;
-  bool _canMove = true;
 
-  /// تهيئة محرك اللعبة
-  void initialize(GameLevel level) {
+  void initialize(GameLevel level, {int initialStreak = 0}) {
     _level = level;
-    _maxMoves = level.minMoves + 10;
+    _maxMoves = level.minMoves + 15;
+
+    final clonedTubes = _copyTubes(level.initialTubes);
+
+    // كشف أي طبقة مجهولة عليا فوراً
+    for (var tube in clonedTubes) {
+      final topLayer = tube.getTopLayer();
+      if (topLayer != null && topLayer.isMystery && !topLayer.isRevealed) {
+        final topIdx = tube.layers.indexOf(topLayer);
+        tube.layers[topIdx] = topLayer.copyWith(isRevealed: true);
+      }
+    }
+
     _currentState = GameState(
-      tubes: _copyTubes(level.initialTubes),
+      tubes: clonedTubes,
       moves: 0,
       elapsedTime: 0,
       isGameWon: false,
       isGameOver: false,
       moveHistory: [],
+      stateHistory: [_copyTubes(clonedTubes)],
       score: 0,
+      stars: 0,
+      streak: initialStreak,
+      remainingTime: level.timeLimit,
     );
   }
 
-  /// الحصول على الحالة الحالية
   GameState get currentState => _currentState;
+  GameLevel get level => _level;
+  int get maxMoves => _maxMoves;
 
-  /// نقل الماء من أنبوب لآخر
+  /// نقل الماء بحساب كمية السوائل والمساحة ومنع الطفح
   bool moveWater(int fromTubeId, int toTubeId) {
-    if (!_canMove) return false;
     if (fromTubeId == toTubeId) return false;
     if (_currentState.isGameWon || _currentState.isGameOver) return false;
 
-    final fromTube = _currentState.tubes[fromTubeId];
-    final toTube = _currentState.tubes[toTubeId];
+    final fromTube = _currentState.tubes.firstWhere((t) => t.id == fromTubeId);
+    final toTube = _currentState.tubes.firstWhere((t) => t.id == toTubeId);
 
-    // التحقق من صحة الحركة
-    if (!_isValidMove(fromTube, toTube)) {
-      return false;
-    }
+    // الأنبوب الهدف مقفل
+    if (toTube.isLocked || fromTube.isLocked) return false;
 
-    // تنفيذ الحركة
+    // التحقق من صلاحية النقل
+    if (!_isValidMove(fromTube, toTube)) return false;
+
+    // تنفيذ الحركة وحفظ لقطة التراجع
     _executeMove(fromTubeId, toTubeId);
-
     return true;
   }
 
-  /// التحقق من صحة الحركة
+  /// التحقق من قواعد الصب
   bool _isValidMove(TestTube from, TestTube to) {
-    // ✅ يجب أن يكون في الأنبوب المصدر ماء
-    final fromColor = from.getTopColor();
-    if (fromColor == null) return false;
+    final fromLayer = from.getTopLayer();
+    if (fromLayer == null) return false;
 
-    // ✅ الأنبوب الهدف إما فارغ أو نفس اللون
-    final toColor = to.getTopColor();
-    if (toColor != null && toColor != fromColor) return false;
-
-    // ✅ الأنبوب الهدف لديه مساحة
     if (!to.hasSpace()) return false;
 
-    return true;
+    final toLayer = to.getTopLayer();
+    if (toLayer == null) return true; // الصب في أنبوب فارغ مسموح دائماً
+
+    // السائل الملون يطابق الهدف، أو أحدهما جوكر قوس قزح
+    return fromLayer.color == toLayer.color ||
+        fromLayer.color == 'rainbow' ||
+        toLayer.color == 'rainbow';
   }
 
-  /// تنفيذ الحركة
+  /// تنفيذ حركة الصب مع الكشف عن السوائل المجهولة والتحقق من القنابل
   void _executeMove(int fromId, int toId) {
+    // حفظ لقطة من الحالة الحالية للتراجع
+    final historySnapshot = _copyTubes(_currentState.tubes);
+
     final newTubes = _copyTubes(_currentState.tubes);
-    final fromTube = newTubes[fromId];
-    final toTube = newTubes[toId];
+    final fromTube = newTubes.firstWhere((t) => t.id == fromId);
+    final toTube = newTubes.firstWhere((t) => t.id == toId);
 
-    // البحث عن آخر ماء ملون في الأنبوب المصدر
-    final fromColor = fromTube.getTopColor();
-    if (fromColor == null) return;
+    final fromLayer = fromTube.getTopLayer()!;
+    final colorToMove = fromLayer.color;
 
-    // نسخ جميع الألوان المتتالية من نفس النوع
-    final colorsToMove = _getConsecutiveColors(fromTube, fromColor);
-
-    // إزالة من المصدر
-    for (int i = 0; i < colorsToMove; i++) {
-      fromTube.colors[fromTube.colors.length - 1 - i] = 'transparent';
-    }
-
-    // إضافة للهدف
-    int addIndex = 0;
-    for (int i = 0; i < toTube.colors.length; i++) {
-      if (toTube.colors[i] == 'transparent') {
-        addIndex = i;
-        break;
-      }
-    }
-
-    for (int i = 0; i < colorsToMove; i++) {
-      toTube.colors[addIndex + i] = fromColor;
-    }
-
-    // تحديث الحالة
-    final newMoveHistory = [..._currentState.moveHistory, (fromId, toId)];
-    int newMoves = _currentState.moves + 1;
-
-    _currentState = _currentState.copyWith(
-      tubes: newTubes,
-      moves: newMoves,
-      moveHistory: newMoveHistory,
-      isGameWon: _checkIfWon(newTubes),
-      isGameOver: newMoves >= _maxMoves && !_checkIfWon(newTubes),
-    );
-  }
-
-  /// الحصول على عدد الألوان المتتالية
-  int _getConsecutiveColors(TestTube tube, String color) {
-    int count = 0;
-    for (int i = tube.colors.length - 1; i >= 0; i--) {
-      if (tube.colors[i] == color) {
-        count++;
+    // حساب عدد الطبقات المتطابقة المتتالية في الأعلى
+    int consecutiveMatching = 0;
+    for (int i = fromTube.layers.length - 1; i >= 0; i--) {
+      final layer = fromTube.layers[i];
+      if (layer.color == 'transparent') continue;
+      if (layer.color == colorToMove) {
+        consecutiveMatching++;
       } else {
         break;
       }
     }
-    return count;
+
+    // الكمية المنقولة = الأقل بين المتتالي والمساحة المتوفرة في الهدف
+    final availableSpace = toTube.getAvailableSpace();
+    final amountToTransfer = min(consecutiveMatching, availableSpace);
+
+    // 1. إزالة السائل من المصدر
+    int removed = 0;
+    for (int i = fromTube.layers.length - 1; i >= 0; i--) {
+      if (fromTube.layers[i].color == colorToMove && removed < amountToTransfer) {
+        fromTube.layers[i] = const TubeLayer(color: 'transparent');
+        removed++;
+      }
+    }
+
+    // كشف السائل المجهول الذي انكشف أسفله
+    final newTop = fromTube.getTopLayer();
+    if (newTop != null && newTop.isMystery && !newTop.isRevealed) {
+      final topIdx = fromTube.layers.indexOf(newTop);
+      fromTube.layers[topIdx] = newTop.copyWith(isRevealed: true);
+    }
+
+    // 2. إضافة السائل إلى الهدف
+    int added = 0;
+    for (int i = 0; i < toTube.layers.length; i++) {
+      if (toTube.layers[i].color == 'transparent' && added < amountToTransfer) {
+        toTube.layers[i] = TubeLayer(
+          color: colorToMove,
+          isMystery: false,
+          isRevealed: true,
+        );
+        added++;
+      }
+    }
+
+    // 3. تحديث عدادات القنابل الموقوتة إن وجدت
+    bool bombExploded = false;
+    for (int i = 0; i < newTubes.length; i++) {
+      final t = newTubes[i];
+      if (t.isBomb && t.bombCountdown != null) {
+        if (t.isSorted()) {
+          // تم إبطال مفعول القنبلة بفرز الأنبوب!
+          newTubes[i] = t.copyWith(isBomb: false, bombCountdown: null);
+        } else {
+          final nextCount = t.bombCountdown! - 1;
+          if (nextCount <= 0) {
+            bombExploded = true;
+            newTubes[i] = t.copyWith(bombCountdown: 0);
+          } else {
+            newTubes[i] = t.copyWith(bombCountdown: nextCount);
+          }
+        }
+      }
+    }
+
+    // 4. فتح الأنابيب المقفلة إذا تم إكمال أي أنبوب
+    final anySorted = newTubes.any((t) => t.isSorted() && !t.isEmpty());
+    if (anySorted) {
+      for (int i = 0; i < newTubes.length; i++) {
+        if (newTubes[i].isLocked) {
+          newTubes[i] = newTubes[i].copyWith(isLocked: false);
+        }
+      }
+    }
+
+    final newMoves = _currentState.moves + 1;
+    final isWon = _checkIfWon(newTubes);
+    final isGameOver = bombExploded ||
+        (newMoves >= _maxMoves && !isWon && _level.mode == GameMode.classic);
+
+    final stars = isWon ? _calculateStars(newMoves, _currentState.elapsedTime) : 0;
+    final score = isWon ? calculateScore(_currentState.elapsedTime) : _currentState.score;
+
+    _currentState = _currentState.copyWith(
+      tubes: newTubes,
+      moves: newMoves,
+      moveHistory: [..._currentState.moveHistory, (fromId, toId)],
+      stateHistory: [..._currentState.stateHistory, historySnapshot],
+      isGameWon: isWon,
+      isGameOver: isGameOver,
+      gameOverReason: bombExploded ? 'bomb_exploded' : (isGameOver ? 'out_of_moves' : null),
+      stars: stars,
+      score: score,
+      clearHint: true,
+      pouringFromId: fromId,
+      pouringToId: toId,
+    );
   }
 
   /// التحقق من الفوز
@@ -261,61 +480,172 @@ class GameEngine {
     return tubes.every((tube) => tube.isSorted());
   }
 
-  /// حساب النقاط
-  int calculateScore(int timeSpent) {
-    if (!_currentState.isGameWon) return 0;
-
-    int baseScore = _level.baseScore;
-    int movesPenalty = (_currentState.moves - _level.minMoves).abs() * 10;
-    int timeBound = timeSpent > 120 ? (timeSpent - 120) * 5 : 0;
-
-    // مكافأة الأداء المثالي
-    int bonusMultiplier = 100;
-    if (_currentState.moves <= _level.minMoves) {
-      bonusMultiplier = 150; // Perfect
-    } else if (_currentState.moves <= _level.minMoves + 5) {
-      bonusMultiplier = 125; // Good
+  /// حساب عدد النجوم المستحقة
+  int _calculateStars(int moves, int time) {
+    if (moves <= _level.minMoves + 2 && time <= 60) {
+      return 3;
+    } else if (moves <= _level.minMoves + 7) {
+      return 2;
     }
-
-    int finalScore = ((baseScore - movesPenalty - timeBound) * bonusMultiplier) ~/ 100;
-    return finalScore > 0 ? finalScore : 100;
+    return 1;
   }
 
-  /// التراجع عن آخر حركة
+  /// حساب النقاط
+  int calculateScore(int timeSpent) {
+    int baseScore = _level.baseScore;
+    int movesPenalty = (_currentState.moves - _level.minMoves).abs() * 15;
+    int timePenalty = timeSpent > 90 ? (timeSpent - 90) * 3 : 0;
+    int finalScore = baseScore - movesPenalty - timePenalty;
+    if (_currentState.stars == 3) finalScore += 150;
+    if (_currentState.streak > 0) finalScore += _currentState.streak * 50;
+    return max(finalScore, 100);
+  }
+
+  /// التراجع الدقيق عن الحركة
   bool undo() {
-    if (_currentState.moveHistory.isEmpty) return false;
+    if (_currentState.stateHistory.length <= 1) return false;
 
-    final lastMove = _currentState.moveHistory.last;
-    final fromId = lastMove.$1;
-    final toId = lastMove.$2;
+    final history = [..._currentState.stateHistory];
+    final previousTubes = history.removeLast();
 
-    // العكس: نقل من toId إلى fromId
-    _executeMove(toId, fromId);
+    final moveHist = [..._currentState.moveHistory];
+    if (moveHist.isNotEmpty) moveHist.removeLast();
 
-    // إزالة من السجل
-    final newHistory = [..._currentState.moveHistory];
-    newHistory.removeLast();
     _currentState = _currentState.copyWith(
-      moveHistory: newHistory,
-      moves: _currentState.moves - 1,
+      tubes: previousTubes,
+      moves: max(0, _currentState.moves - 1),
+      stateHistory: history,
+      moveHistory: moveHist,
+      isGameWon: false,
+      isGameOver: false,
+      clearHint: true,
+      clearPouring: true,
     );
-
     return true;
   }
 
-  /// نسخ الأنابيب
+  /// ميزة القوة: إضافة أنبوب فارغ إضافي (+1 Tube)
+  bool addExtraTube() {
+    if (_currentState.isGameWon || _currentState.isGameOver) return false;
+
+    final currentTubes = [..._currentState.tubes];
+    final newId = currentTubes.map((t) => t.id).reduce(max) + 1;
+
+    final emptyLayers = List.generate(
+      4,
+      (_) => const TubeLayer(color: 'transparent'),
+    );
+
+    currentTubes.add(TestTube(id: newId, layers: emptyLayers));
+
+    _currentState = _currentState.copyWith(
+      tubes: currentTubes,
+      clearHint: true,
+    );
+    return true;
+  }
+
+  /// ميزة القوة: إعادة خلط ذكية للسوائل غير المفروزة
+  bool shuffleRemaining() {
+    if (_currentState.isGameWon || _currentState.isGameOver) return false;
+
+    final newTubes = _copyTubes(_currentState.tubes);
+    final colorsToShuffle = <String>[];
+
+    // جمع ألوان الأنابيب غير المكتملة
+    for (var tube in newTubes) {
+      if (!tube.isSorted()) {
+        for (var layer in tube.layers) {
+          if (layer.color != 'transparent') {
+            colorsToShuffle.add(layer.color);
+          }
+        }
+      }
+    }
+
+    if (colorsToShuffle.isEmpty) return false;
+    colorsToShuffle.shuffle();
+
+    // إعادة توزيعها
+    int colorIdx = 0;
+    for (var tube in newTubes) {
+      if (!tube.isSorted()) {
+        for (int i = 0; i < tube.layers.length; i++) {
+          if (tube.layers[i].color != 'transparent' && colorIdx < colorsToShuffle.length) {
+            tube.layers[i] = tube.layers[i].copyWith(
+              color: colorsToShuffle[colorIdx++],
+            );
+          }
+        }
+      }
+    }
+
+    _currentState = _currentState.copyWith(
+      tubes: newTubes,
+      clearHint: true,
+    );
+    return true;
+  }
+
+  /// الذكاء الاصطناعي لاقتراح الحركة المثالية التالية (Smart AI Hint)
+  (int, int)? getSmartHint() {
+    final tubes = _currentState.tubes;
+
+    // 1. أولوية قصوى: صب نحو أنبوب غير مكتمل لإنهاء فرزه
+    for (var from in tubes) {
+      if (from.isLocked || from.isEmpty()) continue;
+      final fromTop = from.getTopLayer();
+      if (fromTop == null) continue;
+
+      for (var to in tubes) {
+        if (to.id == from.id || to.isLocked || to.isFull()) continue;
+        final toTop = to.getTopLayer();
+
+        if (toTop != null && toTop.color == fromTop.color) {
+          // نقل ممتاز يجمع ألواناً متطابقة
+          _currentState = _currentState.copyWith(hintMove: (from.id, to.id));
+          return (from.id, to.id);
+        }
+      }
+    }
+
+    // 2. صب نحو أنبوب فارغ لتفريغ سائل وكشف سائل مجهول
+    for (var from in tubes) {
+      if (from.isLocked || from.isEmpty() || from.isSorted()) continue;
+      for (var to in tubes) {
+        if (to.id == from.id || to.isLocked) continue;
+        if (to.isEmpty()) {
+          _currentState = _currentState.copyWith(hintMove: (from.id, to.id));
+          return (from.id, to.id);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  void reset() {
+    initialize(_level, initialStreak: _currentState.streak);
+  }
+
+  void tickTimeRush() {
+    if (_currentState.isGameWon || _currentState.isGameOver) return;
+    final nextTime = _currentState.remainingTime - 1;
+    if (nextTime <= 0) {
+      _currentState = _currentState.copyWith(
+        remainingTime: 0,
+        isGameOver: true,
+        gameOverReason: 'time_up',
+      );
+    } else {
+      _currentState = _currentState.copyWith(
+        remainingTime: nextTime,
+        elapsedTime: _currentState.elapsedTime + 1,
+      );
+    }
+  }
+
   List<TestTube> _copyTubes(List<TestTube> tubes) {
     return tubes.map((t) => t.copyWith()).toList();
   }
-
-  /// إعادة تعيين اللعبة
-  void reset() {
-    initialize(_level);
-  }
-
-  /// الحصول على حد الحركات الأقصى
-  int get maxMoves => _maxMoves;
-
-  /// الحصول على المستوى الحالي
-  GameLevel get level => _level;
 }

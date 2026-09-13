@@ -1,6 +1,6 @@
 // lib/domain/services/ads_and_coins_manager.dart
 
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'dart:async';
 
 /// 🎬 نظام إدارة الإعلانات والعملات
@@ -21,9 +21,9 @@ class AdsAndCoinsManager {
       'ca-app-pub-xxxxxxxxxxxxxxxx/wwwwwwwwwwwwww';
 
   // ========== متغيرات الحالة ==========
-  late RewardedAd? _rewardedAd;
-  late InterstitialAd? _interstitialAd;
-  late BannerAd? _bannerAd;
+  // late RewardedAd? _rewardedAd;
+  // late InterstitialAd? _interstitialAd;
+  // late BannerAd? _bannerAd;
 
   DateTime? _lastAdTime;
   final int _adCooldownMinutes = 3;
@@ -203,42 +203,12 @@ class AdsAndCoinsManager {
   //   }
   // }
 
-  /// تحميل إعلان الشريط (Banner)
-  Future<BannerAd?> loadBannerAd() async {
-    try {
-      final adUnitId = _getBannerAdUnitId();
-
-      final bannerAd = BannerAd(
-        adUnitId: adUnitId,
-        size: AdSize.banner,
-        request: const AdRequest(),
-        listener: BannerAdListener(
-          onAdLoaded: (ad) {
-            print('✅ تم تحميل إعلان الشريط');
-          },
-          onAdFailedToLoad: (ad, error) {
-            print('❌ فشل تحميل الإعلان: ${error.message}');
-            ad.dispose();
-          },
-        ),
-      );
-
-      await bannerAd.load();
-      _bannerAd = bannerAd;
-      return bannerAd;
-    } catch (e) {
-      print('❌ خطأ في تحميل الإعلان: $e');
-      return null;
-    }
-  }
+  // Future<BannerAd?> loadBannerAd() async {
+  //   return null;
+  // }
 
   /// الحصول على معرف وحدة الإعلان المكافأة
   String _getRewardedAdUnitId() {
-    // اختبار: استخدم test ad unit ids من Google
-    // return Platform.isAndroid
-    //     ? 'ca-app-pub-3940256099942544/5224354917' // Test ID
-    //     : 'ca-app-pub-3940256099942544/1712485313'; // Test ID for iOS
-
     return REWARDED_AD_UNIT_ANDROID; // استبدل برقمك الفعلي
   }
 
@@ -286,9 +256,9 @@ class AdsAndCoinsManager {
 
   /// التخلص من الموارد
   void dispose() {
-    _rewardedAd?.dispose();
-    _interstitialAd?.dispose();
-    _bannerAd?.dispose();
+    // _rewardedAd?.dispose();
+    // _interstitialAd?.dispose();
+    // _bannerAd?.dispose();
   }
 }
 

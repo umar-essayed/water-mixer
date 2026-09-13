@@ -1,47 +1,81 @@
 // lib/presentation/providers/game_providers.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/entities/game_engine.dart';
-import '../../config/firebase_config.dart';
+import '../../domain/services/level_generator.dart';
+import '../../core/local_storage/game_storage.dart';
 
 // 🎮 Game Engine Provider
-final gameEngineProvider = StateNotifierProvider<GameEngineNotifier, GameState>((ref) {
-  return GameEngineNotifier();
+final gameEngineProvider =
+    StateNotifierProvider<GameEngineNotifier, GameState>((ref) {
+  return GameEngineNotifier(ref);
 });
 
 class GameEngineNotifier extends StateNotifier<GameState> {
+  final Ref _ref;
   late GameEngine _engine;
 
-  GameEngineNotifier()
-      : super(GameState(
+  GameEngineNotifier(this._ref)
+      : super(const GameState(
           tubes: [],
           moves: 0,
           elapsedTime: 0,
           isGameWon: false,
           isGameOver: false,
           moveHistory: [],
+          stateHistory: [],
           score: 0,
         )) {
     _engine = GameEngine();
   }
 
-  /// Initialize game with a level
-  void initializeGame(GameLevel level) {
-    _engine.initialize(level);
+  /// تهيئة اللعبة بمستوى محدد
+  void initializeGame(GameLevel level, {int streak = 0}) {
+    _engine.initialize(level, initialStreak: streak);
     state = _engine.currentState;
   }
 
-  /// Move water from one tube to another
+  /// نقل الماء بين أنبوبين
   bool moveWater(int fromTubeId, int toTubeId) {
     final success = _engine.moveWater(fromTubeId, toTubeId);
     if (success) {
       state = _engine.currentState;
+
+      // إذا فاز اللاعب، حفظ النتائج في التخزين المحلي فوراً
+      if (state.isGameWon) {
+        _handleGameWon();
+      }
     }
     return success;
   }
 
-  /// Undo last move
+  void _handleGameWon() async {
+    final level = _engine.level;
+    final stars = state.stars;
+    final score = state.score;
+    final coinsAward = 50 + (stars * 25) + (state.streak * 20);
+
+    await GameStorage.addCoins(coinsAward);
+    _ref.read(playerCoinsProvider.notifier).state = GameStorage.getCoins();
+
+    if (level.mode == GameMode.classic) {
+      await GameStorage.saveLevelResult(
+        level: level.levelNumber,
+        stars: stars,
+        score: score,
+      );
+    } else if (level.mode == GameMode.endless) {
+      await GameStorage.saveEndlessResult(score, state.streak + 1);
+    } else if (level.mode == GameMode.timeRush) {
+      await GameStorage.saveTimeRushScore(score);
+    } else if (level.mode == GameMode.dailyChallenge) {
+      final now = DateTime.now();
+      final dateKey = '${now.year}_${now.month}_${now.day}';
+      await GameStorage.completeDailyChallenge(dateKey);
+    }
+  }
+
+  /// التراجع عن آخر حركة
   bool undo() {
     final success = _engine.undo();
     if (success) {
@@ -50,166 +84,61 @@ class GameEngineNotifier extends StateNotifier<GameState> {
     return success;
   }
 
-  /// Reset game
+  /// إضافة أنبوب إضافي (+1 Tube)
+  bool addExtraTube() {
+    final success = _engine.addExtraTube();
+    if (success) {
+      state = _engine.currentState;
+    }
+    return success;
+  }
+
+  /// إعادة خلط السوائل المتبقية
+  bool shuffleRemaining() {
+    final success = _engine.shuffleRemaining();
+    if (success) {
+      state = _engine.currentState;
+    }
+    return success;
+  }
+
+  /// طلب تلميح ذكي من الذكاء الاصطناعي
+  (int, int)? getSmartHint() {
+    final hint = _engine.getSmartHint();
+    if (hint != null) {
+      state = _engine.currentState;
+    }
+    return hint;
+  }
+
+  /// عداد الثواني
+  void tickTimer() {
+    if (state.isGameWon || state.isGameOver) return;
+
+    if (_engine.level.mode == GameMode.timeRush) {
+      _engine.tickTimeRush();
+      state = _engine.currentState;
+    } else {
+      state = state.copyWith(elapsedTime: state.elapsedTime + 1);
+    }
+  }
+
+  /// إعادة تعيين المستوى
   void reset() {
     _engine.reset();
     state = _engine.currentState;
   }
 
-  /// Get current engine
   GameEngine get engine => _engine;
-
-  /// Calculate final score
-  int calculateFinalScore(int timeSpent) {
-    return _engine.calculateScore(timeSpent);
-  }
-
-  /// Get max moves
   int getMaxMoves() => _engine.maxMoves;
-
-  /// Get level
   GameLevel getLevel() => _engine.level;
 }
 
-// 🎮 Current Level Provider
-final currentLevelProvider = StateProvider<GameLevel?>((ref) => null);
+// 💰 مزود عملات اللاعب
+final playerCoinsProvider = StateProvider<int>((ref) => GameStorage.getCoins());
 
-// 🎮 Available Levels Provider
-final availableLevelsProvider = FutureProvider<List<GameLevel>>((ref) async {
-  // Mock levels - replace with actual data from Firebase/local
-  return _generateMockLevels();
-});
-
-/// Generate mock levels for testing
-List<GameLevel> _generateMockLevels() {
-  final levels = <GameLevel>[];
-
-  // Level 1 - Easy
-  levels.add(GameLevel(
-    levelNumber: 1,
-    difficulty: 'easy',
-    minMoves: 3,
-    baseScore: 100,
-    initialTubes: [
-      TestTube(
-        id: 0,
-        colors: ['red', 'red', 'blue', 'transparent'],
-      ),
-      TestTube(
-        id: 1,
-        colors: ['blue', 'red', 'transparent', 'transparent'],
-      ),
-      TestTube(
-        id: 2,
-        colors: ['transparent', 'transparent', 'transparent', 'transparent'],
-      ),
-    ],
-    timeLimit: 300,
-  ));
-
-  // Level 2 - Easy
-  levels.add(GameLevel(
-    levelNumber: 2,
-    difficulty: 'easy',
-    minMoves: 4,
-    baseScore: 120,
-    initialTubes: [
-      TestTube(
-        id: 0,
-        colors: ['red', 'blue', 'green', 'transparent'],
-      ),
-      TestTube(
-        id: 1,
-        colors: ['green', 'red', 'transparent', 'transparent'],
-      ),
-      TestTube(
-        id: 2,
-        colors: ['blue', 'transparent', 'transparent', 'transparent'],
-      ),
-      TestTube(
-        id: 3,
-        colors: ['transparent', 'transparent', 'transparent', 'transparent'],
-      ),
-    ],
-    timeLimit: 300,
-  ));
-
-  // Add more levels as needed...
-  for (int i = 3; i <= 50; i++) {
-    levels.add(_generateRandomLevel(i));
-  }
-
-  return levels;
-}
-
-/// Generate a random level
-GameLevel _generateRandomLevel(int levelNumber) {
-  final colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
-  final difficulty = _getDifficultyByLevel(levelNumber);
-  final tubeCount = 3 + (levelNumber ~/ 10);
-  final colorCount = 3 + (levelNumber ~/ 15);
-
-  final tubes = <TestTube>[];
-  for (int i = 0; i < tubeCount; i++) {
-    final tubeColors = <String>[];
-    for (int j = 0; j < 4; j++) {
-      if (i < colorCount && j < 4 - (tubeCount - colorCount)) {
-        tubeColors.add(colors[i % colors.length]);
-      } else {
-        tubeColors.add('transparent');
-      }
-    }
-    tubes.add(TestTube(id: i, colors: tubeColors));
-  }
-
-  return GameLevel(
-    levelNumber: levelNumber,
-    difficulty: difficulty,
-    minMoves: 5 + (levelNumber ~/ 5),
-    baseScore: 100 + (levelNumber * 10),
-    initialTubes: tubes,
-    timeLimit: 300 + (levelNumber * 10),
-  );
-}
-
-String _getDifficultyByLevel(int levelNumber) {
-  if (levelNumber <= 15) return 'easy';
-  if (levelNumber <= 30) return 'medium';
-  if (levelNumber <= 45) return 'hard';
-  if (levelNumber <= 60) return 'very_hard';
-  return 'impossible';
-}
-
-// 💰 User Coins Provider
-final userCoinsProvider = StateProvider<int>((ref) => 0);
-
-// 🏆 User Score Provider
-final userScoreProvider = StateProvider<int>((ref) => 0);
-
-// ⏱️ Timer Provider
-final timerProvider = StateProvider<int>((ref) => 0);
-
-// 📊 Game Stats Provider
-final gameStatsProvider = FutureProvider((ref) async {
-  final auth = FirebaseConfig.instance.auth;
-  final currentUser = auth.currentUser;
-  
-  if (currentUser == null) return null;
-  
-  // Fetch user stats from Firebase
-  return await FirebaseConfig.instance.firestore
-      .collection('users')
-      .doc(currentUser.uid)
-      .get();
-});
-
-// 🏅 Leaderboard Provider
-final leaderboardProvider = FutureProvider((ref) async {
-  try {
-    final result = await FirebaseConfig.instance.getMonthlyLeaderboard();
-    return result.docs;
-  } catch (e) {
-    print('❌ Error fetching leaderboard: $e');
-    return [];
-  }
+// 🗺️ مزود المستويات المتاحة
+final availableLevelsProvider =
+    Provider.family<GameLevel, int>((ref, levelNumber) {
+  return LevelGenerator.generateLevel(levelNumber);
 });

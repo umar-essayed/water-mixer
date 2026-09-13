@@ -51,13 +51,14 @@ jobs:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+          overwrite: true
 
       - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          name: Release v1.0.0
+          tag_name: v1.1.0
+          name: Release v1.1.0 - Endless Thrill & Advanced Mechanics
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
         env:
