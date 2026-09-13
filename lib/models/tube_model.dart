@@ -25,6 +25,9 @@ class TubeModel {
   /// Check if the tube has no liquid
   bool get isEmpty => layers.isEmpty;
 
+  /// Check if the tube contains liquid
+  bool get isNotEmpty => layers.isNotEmpty;
+
   /// Check if the tube has reached its max capacity
   bool get isFull => layers.length >= capacity;
 

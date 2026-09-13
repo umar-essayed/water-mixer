@@ -180,6 +180,8 @@ class AudioManager {
     } catch (_) {}
   }
 
+  void playVictory() => playWin();
+
   // 7. Coin Pickup Sparkle
   void playCoin() {
     if (isVibrationEnabled) {
