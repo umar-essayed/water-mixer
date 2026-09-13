@@ -1,10 +1,9 @@
 // lib/domain/entities/game_engine.dart
 
-import 'package:equatable/equatable.dart';
 import 'dart:math';
 
 /// 🎨 طبقة واحدة من السائل داخل الأنبوب
-class TubeLayer extends Equatable {
+class TubeLayer {
   final String color; // 'red', 'blue', 'green', 'yellow', 'purple', 'orange', 'cyan', 'pink', 'rainbow', 'transparent'
   final bool isMystery; // هل السائل مجهول الهوية؟
   final bool isRevealed; // هل تم كشف السائل المجهول؟
@@ -35,12 +34,10 @@ class TubeLayer extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => [color, isMystery, isRevealed];
 }
 
 /// 🧪 نموذج الأنبوب المخبري (Test Tube)
-class TestTube extends Equatable {
+class TestTube {
   final int id;
   final List<TubeLayer> layers; // [قاع الأنبوب ... قمة الأنبوب]
   final int maxCapacity;
@@ -137,16 +134,6 @@ class TestTube extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => [
-        id,
-        layers,
-        maxCapacity,
-        isLocked,
-        unlockCondition,
-        isBomb,
-        bombCountdown,
-      ];
 }
 
 /// 🎯 أوضاع اللعبة المختلفة
@@ -158,7 +145,7 @@ enum GameMode {
 }
 
 /// 🎮 مستوى اللعبة
-class GameLevel extends Equatable {
+class GameLevel {
   final int levelNumber;
   final GameMode mode;
   final String difficulty;
@@ -181,22 +168,10 @@ class GameLevel extends Equatable {
     this.specialRule,
   });
 
-  @override
-  List<Object?> get props => [
-        levelNumber,
-        mode,
-        difficulty,
-        minMoves,
-        baseScore,
-        initialTubes,
-        timeLimit,
-        worldName,
-        specialRule,
-      ];
 }
 
 /// 🎮 حالة اللعبة الحية
-class GameState extends Equatable {
+class GameState {
   final List<TestTube> tubes;
   final int moves;
   final int elapsedTime;
@@ -269,24 +244,6 @@ class GameState extends Equatable {
     );
   }
 
-  @override
-  List<Object?> get props => [
-        tubes,
-        moves,
-        elapsedTime,
-        isGameWon,
-        isGameOver,
-        gameOverReason,
-        moveHistory,
-        stateHistory,
-        score,
-        stars,
-        streak,
-        remainingTime,
-        hintMove,
-        pouringFromId,
-        pouringToId,
-      ];
 }
 
 /// 🎮 محرك اللعبة المتطور والذكي

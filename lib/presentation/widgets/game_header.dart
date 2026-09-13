@@ -65,7 +65,7 @@ class GameHeader extends StatelessWidget {
                       color: Colors.blueAccent.withOpacity(0.3),
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.blueAccent),
-                    ],
+                    ),
                     child: Text(
                       '$levelNumber',
                       style: const TextStyle(
